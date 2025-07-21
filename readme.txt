@@ -1,7 +1,6 @@
 medimate-backend/
 ├── controllers/                # All logic/handlers for routes
 │   ├── authController.js
-│   ├── clinicController.js
 │   ├── reminderController.js
 │   ├── reportController.js
 │   └── symptomController.js
@@ -15,7 +14,6 @@ medimate-backend/
 │   ├── MedicalReport.js
 │   ├── MedicineReminder.js
 │   ├── SymptomAnalysis.js
-│   └── NearbyClinic.js
 │
 ├── routes/                     # Express route definitions
 │   ├── authRoutes.js
@@ -37,9 +35,7 @@ medimate-backend/
 medimate-frontend/
 ├── public/
 ├── src/
-│   ├── components/          # Reusable UI parts
-│   ├── pages/               # Page-level components (Login, Dashboard, etc.)
-│   ├── services/            # Axios API calls
-│   ├── context/             # Auth/token context (optional)
+│   ├── components/          # Navbar , customLoader.
+│   ├── pages/               # Page-level components (Login, Register , Dashboard, clinics , symptom etc.)
 │   ├── App.js
 │   └── index.js
