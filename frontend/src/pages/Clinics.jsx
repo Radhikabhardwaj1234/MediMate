@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
-const CustomSpinner = () => (
-  <>
-    <div className="loading-overlay">
-      <div className="loader"></div>
-    </div>
-  </>
-);
+import { Card, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+
+function deg2rad(deg) { return deg * (Math.PI / 180); }
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = deg2rad(lat2 - lat1);
+  const dLon = deg2rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 const Clinics = () => {
   const [location, setLocation] = useState(null);
@@ -14,158 +19,108 @@ const Clinics = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Mock nearby clinic data
-  // const mockClinics = [
-  //   {
-  //     name: "CityCare Hospital",
-  //     address: "Model Town, Ludhiana",
-  //     phone: "+91 98123 45678",
-  //     distance: "1.2 km"
-  //   },
-  //   {
-  //     name: "Apollo Pharmacy",
-  //     address: "Ferozepur Road, Ludhiana",
-  //     phone: "+91 99876 54321",
-  //     distance: "2.1 km"
-  //   },
-  //   {
-  //     name: "Global Diagnostic Lab",
-  //     address: "Sarabha Nagar, Ludhiana",
-  //     phone: "+91 90909 12345",
-  //     distance: "3.4 km"
-  //   }
-  // ];
-
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const coords = {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-        };
+        const coords = { lat: pos.coords.latitude, lon: pos.coords.longitude };
         setLocation(coords);
-
         fetchHospitals(coords.lat, coords.lon);
       },
       () => {
-        setError(
-          "⚠️ Location permission denied. Showing default nearby clinics."
-        );
+        setError("Location permission denied. Enable location access to see nearby clinics.");
         setLoading(false);
       }
     );
   }, []);
 
   const fetchHospitals = async (lat, lon) => {
-    const radius = 10000; //5km.
-    const query = `
-    [out:json];
-    (
-      node["amenity"="hospital"]["name"]["addr:state"](around:${radius},${lat},${lon});
-      node["amenity"="clinic"]["name"]["addr:state"](around:${radius},${lat},${lon});
-      node["amenity"="doctors"]["name"]["addr:state"](around:${radius},${lat},${lon});
-    );
-    out body;
-  `;
-
+    const token = localStorage.getItem("token");
     try {
-      const response = await fetch("https://overpass-api.de/api/interpreter", {
-        //overpass third party online API to fetch near by clinics.
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URI}/api/clinics/nearby`, {
         method: "POST",
-        body: query,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lat, lon, radius: 10000 }),
       });
       const data = await response.json();
-      setClinics(data.elements);
-      console.log(data.elements);
-    } catch (err) {
-      console.error("Failed to fetch Overpass data:", err);
+      setClinics(data.elements || []);
+    } catch {
+      setError("Failed to fetch nearby clinics.");
     } finally {
       setLoading(false);
     }
   };
 
-  function getDisFromHarvesine(lat1, lon1, lat2, lon2) {
-    const R = 6371; // Earth's radius in km
-    const dLat = deg2rad(lat2 - lat1);
-    const dLon = deg2rad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) *
-        Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  function deg2rad(deg) {
-    return deg * (Math.PI / 180);
-  }
+  const visible = clinics.filter((c) => c.tags?.addr === undefined && c.tags?.name);
 
   return (
     <>
       <Navbar />
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-[#0f172a] flex items-center gap-2">
+            <i className="bi bi-geo-alt text-[#0d6efd]" />
+            Nearby Clinics &amp; Hospitals
+          </h1>
+          <p className="text-[#64748b] mt-1">Showing healthcare facilities within 10 km of your location.</p>
+        </div>
 
-      <div className="container py-5">
-        <h3 className="text-primary fw-bold mb-4">
-          <i className="bi bi-geo-alt-fill me-2"></i>Nearby Clinics & Pharmacies
-        </h3>
+        {error && (
+          <Alert variant="warning" className="mb-6">
+            <i className="bi bi-exclamation-triangle" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-        {error && <div className="alert alert-warning">{error}</div>}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="w-10 h-10 border-4 border-[#0d6efd] border-t-transparent rounded-full animate-spin" />
+            <p className="text-[#64748b] text-sm">Locating nearby clinics...</p>
+          </div>
+        )}
 
-        {/* {location && (
-          <p className="text-muted mb-4">
-            Detected Location:{" "}
-            <code>
-              {location.lat.toFixed(4)}, {location.lon.toFixed(4)}
-            </code>
-          </p>
-        )} */}
+        {!loading && visible.length === 0 && !error && (
+          <div className="text-center py-16 text-[#94a3b8]">
+            <i className="bi bi-hospital text-4xl block mb-3" />
+            <p className="font-medium">No clinics found nearby</p>
+            <p className="text-sm">Try expanding the search radius or check your location.</p>
+          </div>
+        )}
 
-        {loading ? (
-          <CustomSpinner />
-        ) : (
-          <div className="row">
-            {clinics
-              .filter((clinic) => clinic.tags.addr == undefined)
-              .map((clinic, idx) => (
-                <div className="col-md-6 col-lg-4" key={idx}>
-                  <div className="card shadow-sm mb-4 border-0">
-                    <div className="card-body">
-                      <h5 className="text-primary fw-bold">
-                        <i className="bi bi-hospital me-2"></i>
-                        {clinic.tags.name}
-                      </h5>
-                      <p className="mb-1">
-                        <strong>Address:</strong> {clinic.tags["addr:full"]}
-                      </p>
-                      <p className="mb-1">
-                        <strong>State:</strong> {clinic.tags["addr:state"]}
-                      </p>
-                      <p className="mb-1">
-                        <strong>Postcode:</strong>{" "}
-                        {clinic.tags["addr:postcode"]}
-                      </p>
-                      {/* <p className="mb-1"><strong>Phone:</strong> {clinic.phone}</p> */}
-                      <p className="mb-1">
-                        <strong>Distance:</strong>{" "}
-                        {getDisFromHarvesine(
-                          location.lat,
-                          location.lon,
-                          clinic.lat,
-                          clinic.lon
-                        ).toFixed(1) + " km"}
-                      </p>
-                      {/* <a
-                        href={`tel:${clinic.phone}`}
-                        className="btn btn-outline-primary btn-sm btn-rounded mt-2"
-                      >
-                        <i className="bi bi-telephone me-1"></i> Call Clinic
-                      </a> */}
+        {!loading && visible.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visible.map((clinic, idx) => {
+              const dist = location ? haversine(location.lat, location.lon, clinic.lat, clinic.lon) : null;
+              return (
+                <Card key={idx} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-xl bg-[#e7f1ff] flex items-center justify-center shrink-0">
+                        <i className="bi bi-hospital text-[#0d6efd]" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-[#0f172a] text-sm leading-tight">{clinic.tags.name}</h3>
+                        {dist !== null && (
+                          <Badge variant="secondary" className="mt-1 text-xs">{dist.toFixed(1)} km away</Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                    <div className="space-y-1 text-xs text-[#64748b]">
+                      {clinic.tags["addr:full"] && (
+                        <p><i className="bi bi-map-pin mr-1" />{clinic.tags["addr:full"]}</p>
+                      )}
+                      {clinic.tags["addr:postcode"] && (
+                        <p><i className="bi bi-mailbox mr-1" />Postcode: {clinic.tags["addr:postcode"]}</p>
+                      )}
+                      {clinic.tags.phone && (
+                        <a href={`tel:${clinic.tags.phone}`} className="flex items-center gap-1 text-[#0d6efd] hover:underline">
+                          <i className="bi bi-telephone" />{clinic.tags.phone}
+                        </a>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\radhi\\\\OneDrive\\\\Desktop\\\\mediMate\\\\MediMate\" -Recurse -Force)",
+      "Bash(Select-Object -Property FullName)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\radhi\\\\OneDrive\\\\Desktop\\\\mediMate\\\\MediMate\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Skill(ui-ux-pro-max:ui-ux-pro-max)",
+      "Read(//c/Users/radhi/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"healthcare medical assistant modern glassmorphism\" --design-system -p \"MediMate\" -f markdown)",
+      "Bash(python *)",
+      "Bash(npm run *)"
+    ]
+  }
+}

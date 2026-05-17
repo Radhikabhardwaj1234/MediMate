@@ -1,35 +1,37 @@
 import React, { useState } from "react";
-import axios from "axios";
 import Navbar from "../components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
 const MedicineLookup = () => {
   const [query, setQuery] = useState("");
   const [medicineInfo, setMedicineInfo] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleSearch = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMedicineInfo(null);
-    setMessage("");
+    setError("");
 
     try {
-      // MOCK RESPONSE (replace with real API if needed)
       const mockData = {
         name: query,
-        usage: "Used to relieve mild to moderate pain.",
+        usage: "Used to relieve mild to moderate pain and reduce fever.",
         dosage: "500mg twice daily after meals.",
         sideEffects: ["Nausea", "Drowsiness", "Stomach upset"],
-        brand: "MediCare"
+        brand: "MediCare",
       };
-
-      // Simulate delay (mimic real fetch)
       await new Promise((res) => setTimeout(res, 1000));
-
       setMedicineInfo(mockData);
     } catch {
-      setMessage("❌ Unable to fetch medicine details.");
+      setError("Unable to fetch medicine details. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -38,50 +40,78 @@ const MedicineLookup = () => {
   return (
     <>
       <Navbar />
-      <div className="container py-5">
-        <div className="row justify-content-center">
-          <div className="col-md-8">
-            <div className="card card-custom p-4 shadow border-0">
-              <h4 className="text-secondary fw-bold mb-4">
-                <i className="bi bi-capsule-pill me-2"></i>Medicine Lookup
-              </h4>
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-[#0f172a] flex items-center gap-2">
+            <i className="bi bi-capsule text-[#0d6efd]" />
+            Medicine Lookup
+          </h1>
+          <p className="text-[#64748b] mt-1">Search any medicine to see its uses, dosage, and side effects.</p>
+        </div>
 
-              <form onSubmit={handleSearch}>
-                <div className="input-group mb-3">
-                  <input
-                    type="text"
-                    className="form-control rounded-start-pill"
-                    placeholder="Enter medicine name..."
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <form onSubmit={handleSearch} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="search">Medicine name</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="search"
+                    placeholder="e.g. Paracetamol, Aspirin..."
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     required
                   />
-                  <button className="btn btn-secondary rounded-end-pill" type="submit" disabled={loading}>
+                  <Button type="submit" disabled={loading} className="shrink-0">
                     {loading ? (
-                      <span className="spinner-border spinner-border-sm"></span>
+                      <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <>
-                        <i className="bi bi-search me-1"></i>Search
-                      </>
+                      <><i className="bi bi-search mr-1" />Search</>
                     )}
-                  </button>
+                  </Button>
                 </div>
-              </form>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-              {message && <div className="alert alert-warning">{message}</div>}
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-              {medicineInfo && (
-                <div className="alert alert-light border-start border-4 border-secondary mt-4 shadow-sm">
-                  <h5 className="fw-semibold text-secondary">{medicineInfo.name}</h5>
-                  <p><strong>Usage:</strong> {medicineInfo.usage}</p>
-                  <p><strong>Dosage:</strong> {medicineInfo.dosage}</p>
-                  <p><strong>Side Effects:</strong> {medicineInfo.sideEffects.join(", ")}</p>
-                  <p><strong>Brand:</strong> {medicineInfo.brand}</p>
+        {medicineInfo && (
+          <Card>
+            <CardHeader className="pb-3 bg-[#e7f1ff] rounded-t-xl">
+              <CardTitle className="flex items-center gap-2 text-[#0d6efd]">
+                <i className="bi bi-capsule-pill" />
+                {medicineInfo.name}
+                <Badge variant="secondary" className="ml-auto">{medicineInfo.brand}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-1">Usage</p>
+                <p className="text-sm text-[#475569]">{medicineInfo.usage}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-1">Dosage</p>
+                <p className="text-sm text-[#475569]">{medicineInfo.dosage}</p>
+              </div>
+              <Separator />
+              <div>
+                <p className="text-xs font-semibold text-[#94a3b8] uppercase tracking-wider mb-2">Side Effects</p>
+                <div className="flex flex-wrap gap-2">
+                  {medicineInfo.sideEffects.map((effect) => (
+                    <Badge key={effect} variant="outline">{effect}</Badge>
+                  ))}
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </>
   );

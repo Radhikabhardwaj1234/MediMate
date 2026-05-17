@@ -1,23 +1,29 @@
 import React, { useState } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 const SymptomChecker = () => {
   const [symptoms, setSymptoms] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleCheck = async (e) => {
     e.preventDefault();
     setLoading(true);
     setResult(null);
+    setError("");
 
     try {
       const token = localStorage.getItem("token");
-      const base = process.env.REACT_APP_BACKEND_URI; // sanity check
-      if (!base) {
-        throw new Error("Backend URL not configured (REACT_APP_BACKEND_URI).");
-      }
+      const base = import.meta.env.VITE_BACKEND_URI;
+      if (!base) throw new Error("Backend URL not configured.");
 
       const response = await axios.post(
         `${base}/api/symptoms/analyze`,
@@ -29,108 +35,104 @@ const SymptomChecker = () => {
           },
         }
       );
-      console.log(response);
-      setResult(response.data.result || "No result.");
-    } catch (error) {
-      console.error("Symptom analysis error:", error);
-      const msg =
-        error.response?.data?.message ||
-        error.message ||
-        "❌ Failed to analyze symptoms.";
-      setResult(msg);
+      setResult(response.data.result || null);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Failed to analyze symptoms.");
     } finally {
       setLoading(false);
     }
   };
 
+  const isEmergency = result?.isEmergency === "true";
+  const isNA = result?.condition === "NA";
+
   return (
     <>
       <Navbar />
-      <div className="container py-5">
-        <h3 className="text-medimate fw-bold mb-4">Symptom Checker</h3>
-        <form onSubmit={handleCheck}>
-          <div className="mb-3">
-            <label className="form-label fw-semibold">
-              Describe your symptoms
-            </label>
-            <textarea
-              className="form-control"
-              rows="4"
-              name="symptomsText"
-              placeholder="e.g. headache, fever, body pain..."
-              value={symptoms}
-              onChange={(e) => setSymptoms(e.target.value)}
-              required
-            />
-          </div>
+      <div className="max-w-2xl mx-auto px-4 py-10">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-[#0f172a] flex items-center gap-2">
+            <i className="bi bi-activity text-[#0d6efd]" />
+            Symptom Checker
+          </h1>
+          <p className="text-[#64748b] mt-1">Describe your symptoms and get an AI-powered analysis.</p>
+        </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-rounded"
-            disabled={loading}
-          >
-            {loading ? "Analyzing..." : "Check Symptoms"}
-          </button>
-        </form>
+        <Card className="mb-6">
+          <CardContent className="p-6">
+            <form onSubmit={handleCheck} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="symptoms">Describe your symptoms</Label>
+                <Textarea
+                  id="symptoms"
+                  rows={4}
+                  placeholder="e.g. headache, fever, body pain for the last 2 days..."
+                  value={symptoms}
+                  onChange={(e) => setSymptoms(e.target.value)}
+                  required
+                  className="min-h-[120px]"
+                />
+              </div>
+              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                {loading ? (
+                  <><span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />Analyzing...</>
+                ) : (
+                  <><i className="bi bi-search mr-2" />Check Symptoms</>
+                )}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
-        {/* {result && (
-          <div className="alert alert-info mt-4">
-            <strong>AI Analysis:</strong> {JSON.stringify(result)}
-          </div>
-        )} */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-        {result && typeof result === "object" ? (
-        <>
-        {result.condition === "NA" ? (
-      <div className="alert alert-warning mt-4">
-        <strong> Unable to understand the symptoms.</strong>
-        <div>Please try rephrasing or describing your symptoms more clearly.</div>
-      </div>
-    ) :(
-        <div
-          className={`alert mt-4 ${
-            result.isEmergency == "true"? "alert-danger" : "alert-info"
-          }`}
-        >
-          <h5 className="fw-bold">
-            {result.isEmergency == "true" ? "🚨 Emergency Alert:" : "AI Analysis:"}
-          </h5>
-          <ul className="list-unstyled">
-            <li>
-              <span className="fw-bold">Condition:</span>{" "}
-              {result.condition || "N/A"}
-            </li>
-            <li>
-              <span className="fw-bold">What To Do:</span>{" "}
-              {result.whatToDo || "N/A"}
-            </li>
-            <li>
-              <span className="fw-bold">Temporary Medicine Suggestion:</span>{" "}
-              {result.temporaryMedicineSuggestion || "N/A"}
-            </li>
-            <li>
-              <span className="fw-bold">Kind Of Doctor:</span>{" "}
-              {result.kindOfDoctor || "N/A"}
-            </li>
-            <li>
-              <span className="fw-bold">Is Emergency:</span>{" "}
-              {result.isEmergency == "true" ? (
-                <span className="text-danger fw-bold">Yes</span>
-              ) : (
-                "No"
+        {result && isNA && (
+          <Alert variant="warning">
+            <i className="bi bi-question-circle" />
+            <AlertTitle>Unable to understand symptoms</AlertTitle>
+            <AlertDescription>Please try rephrasing or describing your symptoms more clearly.</AlertDescription>
+          </Alert>
+        )}
+
+        {result && !isNA && typeof result === "object" && (
+          <Card className={isEmergency ? "border-red-400" : ""}>
+            <CardHeader className={`pb-3 rounded-t-xl ${isEmergency ? "bg-red-50" : "bg-[#e7f1ff]"}`}>
+              <CardTitle className={`flex items-center gap-2 text-base ${isEmergency ? "text-red-700" : "text-[#0d6efd]"}`}>
+                <i className={`bi ${isEmergency ? "bi-exclamation-triangle-fill" : "bi-robot"}`} />
+                {isEmergency ? "Emergency Alert" : "AI Analysis"}
+                {isEmergency && <Badge variant="destructive" className="ml-auto">Emergency</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-3">
+              {[
+                { label: "Condition", value: result.condition, icon: "bi-clipboard2-pulse" },
+                { label: "What To Do", value: result.whatToDo, icon: "bi-check2-circle" },
+                { label: "Temporary Medicine", value: result.temporaryMedicineSuggestion, icon: "bi-capsule" },
+                { label: "Type of Doctor", value: result.kindOfDoctor, icon: "bi-person-badge" },
+              ].map(({ label, value, icon }) =>
+                value ? (
+                  <div key={label} className="flex gap-3">
+                    <i className={`bi ${icon} text-[#0d6efd] mt-0.5 shrink-0`} />
+                    <div>
+                      <span className="font-semibold text-sm text-[#0f172a]">{label}: </span>
+                      <span className="text-sm text-[#475569]">{value}</span>
+                    </div>
+                  </div>
+                ) : null
               )}
-            </li>
-          </ul>
-        </div>)}
-        </>
-      ) : (
-        result && (
-          <div className="alert alert-warning mt-4">
-            <strong>{result}</strong>
-          </div>
-        )
-      )}
+            </CardContent>
+          </Card>
+        )}
 
+        {result && typeof result === "string" && (
+          <Alert variant="warning">
+            <AlertDescription>{result}</AlertDescription>
+          </Alert>
+        )}
       </div>
     </>
   );

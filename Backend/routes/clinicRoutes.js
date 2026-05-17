@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { findNearbyClinics } = require("../controllers/clinicController");
+const { findNearbyClinics } = require("../controller/clinicController");
 const protect = require("../middleware/authMiddleware");
 
 // @route   POST /api/clinics/nearby

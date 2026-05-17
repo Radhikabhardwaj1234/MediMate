@@ -1,87 +1,56 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+
+const FEATURES = [
+  { title: "Symptom Checker", icon: "bi-activity", desc: "Analyze your symptoms with AI support.", btn: "Check Symptoms", route: "/symptoms", color: "#0d6efd" },
+  { title: "Medicine Reminders", icon: "bi-alarm", desc: "Manage your daily medicine alerts.", btn: "View Reminders", route: "/reminders", color: "#16a34a" },
+  { title: "Medical Reports", icon: "bi-file-earmark-medical", desc: "Upload and view your health reports.", btn: "Upload Reports", route: "/reports", color: "#0891b2" },
+  { title: "Nearby Clinics", icon: "bi-geo-alt", desc: "Find hospitals and pharmacies nearby.", btn: "Find Clinics", route: "/clinics", color: "#0d6efd" },
+  { title: "Emergency Info", icon: "bi-exclamation-triangle", desc: "Quick access to emergency numbers.", btn: "Emergency Help", route: "/emergency", color: "#dc2626" },
+  { title: "Medicine Lookup", icon: "bi-capsule", desc: "Search and learn about medicines.", btn: "Search Medicines", route: "/medicines", color: "#7c3aed" },
+];
 
 const Dashboard = () => {
-  let user = ""; // Replace with real user name if needed
-  
-  let stored = localStorage.getItem("medimateUser");
+  let user = "";
+  const stored = localStorage.getItem("medimateUser");
   if (stored) {
-    const parsed = JSON.parse(stored);
-    if (parsed?.name) user = parsed.name;
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed?.name) user = parsed.name;
+    } catch {}
   }
-  
-  const features = [
-    {
-      title: "Symptom Checker",
-      icon: "bi-thermometer-half",
-      text: "Analyze your symptoms with AI support.",
-      btnText: "Check Symptoms",
-      color: "danger",
-       route: "/symptoms",
-    },
-    {
-      title: "Medicine Reminders",
-      icon: "bi-alarm",
-      text: "Manage your daily medicine alerts.",
-      btnText: "View Reminders",
-      color: "success",
-      route: "/reminders"
-    },
-    {
-      title: "Medical Reports",
-      icon: "bi-file-earmark-medical-fill",
-      text: "Upload and view your health reports.",
-      btnText: "Upload Reports",
-      color: "info",
-       route: "/reports"
-    },
-    {
-      title: "Nearby Clinics",
-      icon: "bi-geo-alt-fill",
-      text: "Find hospitals and pharmacies nearby.",
-      btnText: "Find Clinics",
-      color: "primary",
-      route: "/clinics"
-    },
-    {
-      title: "Emergency Contact",
-      icon: "bi-phone-fill",
-      text: "Quickly alert your emergency contacts.",
-      btnText: "Emergency Help",
-      color: "warning",
-      route: "/emergency"
-    },
-    {
-    title: "Medicine Lookup",
-    icon: "bi-capsule-pill",
-    text: "Search and learn about medicines with detailed info.",
-    btnText: "Search Medicines",
-    color: "secondary",
-     route: "/medicines"
-    },
-
-  ];
 
   return (
     <>
       <Navbar />
-      <div className="container py-5">
-        <h3 className="text-medimate fw-semibold mb-4">Welcome, {user} </h3>
+      <div className="max-w-6xl mx-auto px-4 py-10">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-[#0f172a]">
+            Welcome back{user ? `, ${user}` : ""}
+          </h1>
+          <p className="text-[#64748b] mt-1">What would you like to do today?</p>
+        </div>
 
-        <div className="row g-4">
-          {features.map((feature, index) => (
-            <div className="col-md-4" key={index}>
-              <div className="card card-custom text-center p-4 border-0 h-100">
-                <i className={`bi ${feature.icon} display-4 text-${feature.color} mb-3`}></i>
-                <h5 className={`text-${feature.color} fw-bold`}>{feature.title}</h5>
-                <p className="text-muted small">{feature.text}</p>
-                <Link to={feature.route} className={`btn btn-outline-${feature.color} btn-rounded w-100`}>
-                    {feature.btnText}
-                </Link>
-
-              </div>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {FEATURES.map((f) => (
+            <Card key={f.route} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div
+                  className="w-11 h-11 rounded-xl flex items-center justify-center mb-4"
+                  style={{ background: `${f.color}18` }}
+                >
+                  <i className={`bi ${f.icon} text-xl`} style={{ color: f.color }} />
+                </div>
+                <h3 className="font-bold text-[#0f172a] mb-1">{f.title}</h3>
+                <p className="text-sm text-[#64748b] mb-4">{f.desc}</p>
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <Link to={f.route}>{f.btn}</Link>
+                </Button>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>

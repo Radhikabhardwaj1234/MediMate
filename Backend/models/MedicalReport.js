@@ -26,9 +26,8 @@ const MedicalReportSchema = new mongoose.Schema({
   },
 
   aiSummary: {
-    interpretation: String,
-    flaggedIssues: [String],
-    recommendation: String
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
   },
 
   status: {

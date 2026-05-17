@@ -1,7 +1,7 @@
 const { GoogleGenAI , Type} = require("@google/genai");
 
 const ai = new GoogleGenAI({
-  apiKey: "AIzaSyCHhEHlj-eaawAgllrf5G1-ohaTUu54elU",
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 const analyzeAI = async(symptomsText)=> {

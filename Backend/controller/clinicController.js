@@ -1,60 +1,44 @@
-// const NearbyClinic = require("../models/NearbyClinic");
+const OVERPASS_ENDPOINTS = [
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+];
 
-// const findNearbyClinics = async (req, res) => {
-//   try {
-//     const { lat, lng } = req.body;
+const findNearbyClinics = async (req, res) => {
+  const { lat, lon, radius = 10000 } = req.body;
 
-//     if (!lat || !lng) {
-//       return res.status(400).json({ message: "Latitude and longitude are required." });
-//     }
+  if (!lat || !lon) {
+    return res.status(400).json({ message: "lat and lon are required." });
+  }
 
-//     //  (Simulate results for now)
-//     const mockClinics = [
-//       {
-//         placeId: "clinic123",
-//         name: "City Care Hospital",
-//         address: "123 Main St, New Delhi",
-//         location: { lat, lng },
-//         type: "hospital",
-//         contactNumber: "9876543210",
-//         website: "http://citycarehospital.com",
-//         rating: 4.5,
-//         totalRatings: 200,
-//         openingHours: ["Mon-Fri: 9AM–8PM", "Sat: 10AM–6PM"]
-//       },
-//       {
-//         placeId: "clinic456",
-//         name: "Healthy Life Clinic",
-//         address: "456 Wellness Road, New Delhi",
-//         location: { lat, lng },
-//         type: "clinic",
-//         contactNumber: "9123456780",
-//         rating: 4.2,
-//         totalRatings: 95,
-//         openingHours: ["Mon-Sun: 10AM–9PM"]
-//       }
-//     ];
+  const query = `[out:json];(node["amenity"="hospital"]["name"](around:${radius},${lat},${lon});node["amenity"="clinic"]["name"](around:${radius},${lat},${lon});node["amenity"="doctors"]["name"](around:${radius},${lat},${lon}););out body;`;
 
-//     //Save mock results to DB if not already cached
-//     // for (const clinic of mockClinics) {
-//     //   const exists = await NearbyClinic.findOne({ placeId: clinic.placeId });
-//     //   if (!exists) {
-//     //     await NearbyClinic.create(clinic);
-//     //   }
-//     // }
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
+          "User-Agent": "MediMate/1.0 (health assistant app)",
+        },
+        body: `data=${encodeURIComponent(query)}`,
+      });
 
-//     //  Return all cached clinics (limit to 10)
-//     // const nearby = await NearbyClinic.find().sort({ rating: -1 }).limit(10);
+      const text = await response.text();
+      console.log(`Overpass [${endpoint}] status: ${response.status}`);
 
-//     res.status(200).json({
-//       message: "Nearby clinics fetched successfully.",
-//       clinics: nearby
-//     });
+      try {
+        const data = JSON.parse(text);
+        return res.status(200).json(data);
+      } catch {
+        console.error(`Non-JSON from ${endpoint}:`, text.substring(0, 300));
+      }
+    } catch (err) {
+      console.error(`Fetch error from ${endpoint}:`, err.message);
+    }
+  }
 
-//   } catch (error) {
-//     console.error("Nearby clinic error:", error);
-//     res.status(500).json({ message: "Server error while fetching clinics." });
-//   }
-// };
+  res.status(502).json({ message: "All Overpass endpoints failed. Try again later." });
+};
 
-// module.exports = { findNearbyClinics };
+module.exports = { findNearbyClinics };

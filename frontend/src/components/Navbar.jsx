@@ -1,75 +1,45 @@
-// import React from "react";
-// import { Link } from "react-router-dom";
-
-// const Navbar = () => {
-//   return (
-//     <nav className="navbar navbar-expand-lg bg-white shadow-sm py-3">
-//       <div className="container">
-//         <Link className="navbar-brand text-medimate fw-bold fs-4" to="/">
-//           <i className="bi bi-heart-pulse-fill me-2 text-danger"></i> MediMate
-//         </Link>
-//         <div className="ms-auto">
-//           <Link to="/login" className="btn btn-outline-primary btn-sm me-2 btn-rounded">
-//             Login
-//           </Link>
-//           <Link to="/register" className="btn btn-primary btn-sm btn-rounded">
-//             Register
-//           </Link>
-         
-//         </div>
-//       </div>
-//     </nav>
-//   );
-// };
-
-// export default Navbar;
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const isLoggedIn = Boolean(token);
+  const brandLink = isLoggedIn ? "/dashboard" : "/";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("medimateUser");
     navigate("/login");
   };
 
-  // Where should the brand/logo go?
-  const brandLink = isLoggedIn ? "/dashboard" : "/login";
-
   return (
-    <nav className="navbar navbar-expand-lg bg-white shadow-sm py-3">
-      <div className="container">
-     
-        <Link className="navbar-brand text-medimate fw-bold fs-4" to={brandLink}>
-          <i className="bi bi-heart-pulse-fill me-2 text-danger"></i> MediMate
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-[#e2e8f0]">
+      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+        <Link to={brandLink} className="flex items-center gap-2 no-underline">
+          <i className="bi bi-heart-pulse text-[#0d6efd] text-lg" />
+          <span className="font-extrabold text-[#0f172a]">MediMate</span>
         </Link>
 
-        {/* Right-side buttons */}
-        <div className="ms-auto d-flex align-items-center gap-2">
+        <div className="flex items-center gap-2">
           {!isLoggedIn ? (
             <>
-              <Link to="/login" className="btn btn-outline-primary btn-sm btn-rounded">
-                Login
-              </Link>
-              <Link to="/register" className="btn btn-primary btn-sm btn-rounded">
-                Register
-              </Link>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/register">Register</Link>
+              </Button>
             </>
           ) : (
             <>
-              <Link to="/dashboard" className="btn btn-outline-primary btn-sm btn-rounded">
-                Dashboard
-              </Link>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="btn btn-danger btn-sm btn-rounded"
-              >
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/dashboard">Dashboard</Link>
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleLogout}>
                 Logout
-              </button>
+              </Button>
             </>
           )}
         </div>

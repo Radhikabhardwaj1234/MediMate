@@ -2,7 +2,7 @@ const { GoogleGenAI , Type, createUserContent,
   createPartFromUri} = require("@google/genai");
 
 const ai = new GoogleGenAI({
-  apiKey: "AIzaSyCHhEHlj-eaawAgllrf5G1-ohaTUu54elU",
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
 const prompt = `Analyze the following medical report attached and return a structured JSON with:
